@@ -63,7 +63,7 @@
         "command": "./axo.exe"
       },
       "linux": {
-        "command": "./axo.AppImage"
+        "command": "./axo"
       },
       "options": {
         "cwd": "${workspaceFolder}/build/bin/debug"

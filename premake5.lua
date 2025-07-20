@@ -45,6 +45,8 @@ project "lfs"
 
   files { "vendor/lfs/*.h", "vendor/lfs/*.c" }
   includedirs { "vendor/lua" }
+  defines { "_CRT_SECURE_NO_WARNINGS" }
+  disablewarnings { "4133" }
 
 project "axo"
   kind "consoleapp"
