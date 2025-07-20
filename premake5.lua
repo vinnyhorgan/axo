@@ -48,6 +48,20 @@ project "lfs"
   defines { "_CRT_SECURE_NO_WARNINGS" }
   disablewarnings { "4133" }
 
+project "lpeg"
+  kind "staticlib"
+
+  targetdir "%{wks.location}/lpeg/bin/%{cfg.buildcfg}"
+  objdir "%{wks.location}/lpeg/obj/%{cfg.buildcfg}"
+
+  files { "vendor/lpeg/*.h", "vendor/lpeg/*.c" }
+  includedirs { "vendor/lua" }
+
+  disablewarnings { "4244", "4267" }
+
+  filter "configurations:debug"
+    undefines { "DEBUG" }
+
 project "axo"
   kind "consoleapp"
   cdialect "c17"
@@ -65,7 +79,7 @@ project "axo"
     "vendor/lfs",
   }
 
-  links { "lua", "glfw", "lfs" }
+  links { "lua", "glfw", "lfs", "lpeg" }
 
   filter "configurations:release"
     postbuildcommands {

@@ -20,6 +20,7 @@
            ", made with <3 by vinny\n"
 
 int luaopen_lfs(lua_State* L);
+int luaopen_lpeg(lua_State* L);
 
 static lua_State* global_L = NULL;
 
@@ -46,6 +47,14 @@ static int handler(lua_State* L) {
   return 1;
 }
 
+static void luax_preload(lua_State* L, const char* name, lua_CFunction func) {
+  lua_getglobal(L, "package");
+  lua_getfield(L, -1, "preload");
+  lua_pushcfunction(L, func);
+  lua_setfield(L, -2, name);
+  lua_pop(L, 2);
+}
+
 int main(int argc, char** argv) {
   if (argc < 2) {
     fprintf(stderr, HELP_STR);
@@ -67,12 +76,8 @@ int main(int argc, char** argv) {
   }
 
   luaL_openlibs(L);
-
-  lua_getglobal(L, "package");
-  lua_getfield(L, -1, "preload");
-  lua_pushcfunction(L, luaopen_lfs);
-  lua_setfield(L, -2, "lfs");
-  lua_pop(L, 2);
+  luax_preload(L, "lfs", luaopen_lfs);
+  luax_preload(L, "lpeg", luaopen_lpeg);
 
   lua_createtable(L, argc, 0);
   for (int i = 0; i < argc; i++) {

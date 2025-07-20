@@ -60,7 +60,8 @@
       "label": "run",
       "type": "shell",
       "windows": {
-        "command": "./axo.exe"
+        "command": "./axo.exe",
+        "args": ["test.lua"]
       },
       "linux": {
         "command": "./axo"
