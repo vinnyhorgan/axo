@@ -24,7 +24,7 @@ def create_c_header(input_path, output_path):
     with open(output_path, "w") as f_out:
       f_out.write(f"#ifndef {guard_name}\n")
       f_out.write(f"#define {guard_name}\n\n")
-      f_out.write(f"unsigned char {var_name}[] = {{\n")
+      f_out.write(f"unsigned char l_{var_name}[] = {{\n")
 
       hex_values = [f"0x{byte:02x}" for byte in data]
 
@@ -36,7 +36,7 @@ def create_c_header(input_path, output_path):
       f_out.write("\n")
 
       f_out.write("};\n\n")
-      f_out.write(f"unsigned int {var_name}_len = {len(data) - 1};\n\n")
+      f_out.write(f"unsigned int l_{var_name}_len = {len(data) - 1};\n\n")
       f_out.write(f"#endif /* {guard_name} */\n")
 
     print(f"successfully converted '{input_path}' to '{output_path}'.")

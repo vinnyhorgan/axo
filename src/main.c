@@ -7,7 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "re.h"
+#include "l_ftp.h"
+#include "l_headers.h"
+#include "l_http.h"
+#include "l_ltn12.h"
+#include "l_mbox.h"
+#include "l_mime.h"
+#include "l_re.h"
+#include "l_smtp.h"
+#include "l_socket.h"
+#include "l_tp.h"
+#include "l_url.h"
 
 #define VERSION "0.1.0"
 
@@ -24,6 +34,18 @@
 int luaopen_lfs(lua_State* L);
 int luaopen_lpeg(lua_State* L);
 int luaopen_re(lua_State* L);
+int luaopen_socket_core(lua_State* L);
+int luaopen_mime_core(lua_State* L);
+int luaopen_socket(lua_State* L);
+int luaopen_ftp(lua_State* L);
+int luaopen_http(lua_State* L);
+int luaopen_ltn12(lua_State* L);
+int luaopen_mime(lua_State* L);
+int luaopen_smtp(lua_State* L);
+int luaopen_tp(lua_State* L);
+int luaopen_url(lua_State* L);
+int luaopen_headers(lua_State* L);
+int luaopen_mbox(lua_State* L);
 
 static lua_State* global_L = NULL;
 
@@ -82,6 +104,18 @@ int main(int argc, char** argv) {
   luax_preload(L, "lfs", luaopen_lfs);
   luax_preload(L, "lpeg", luaopen_lpeg);
   luax_preload(L, "re", luaopen_re);
+  luax_preload(L, "socket.core", luaopen_socket_core);
+  luax_preload(L, "mime.core", luaopen_mime_core);
+  luax_preload(L, "socket", luaopen_socket);
+  luax_preload(L, "socket.ftp", luaopen_ftp);
+  luax_preload(L, "socket.http", luaopen_http);
+  luax_preload(L, "ltn12", luaopen_ltn12);
+  luax_preload(L, "mime", luaopen_mime);
+  luax_preload(L, "socket.smtp", luaopen_smtp);
+  luax_preload(L, "socket.tp", luaopen_tp);
+  luax_preload(L, "socket.url", luaopen_url);
+  luax_preload(L, "socket.headers", luaopen_headers);
+  luax_preload(L, "mbox", luaopen_mbox);
 
   lua_createtable(L, argc, 0);
   for (int i = 0; i < argc; i++) {
@@ -113,7 +147,77 @@ int main(int argc, char** argv) {
 }
 
 int luaopen_re(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)re, sizeof(re), "re") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_re, sizeof(l_re), "re") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_socket(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_socket, sizeof(l_socket), "socket") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_ftp(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_ftp, sizeof(l_ftp), "ftp") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_http(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_http, sizeof(l_http), "http") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_ltn12(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_ltn12, sizeof(l_ltn12), "ltn12") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_mime(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_mime, sizeof(l_mime), "mime") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_smtp(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_smtp, sizeof(l_smtp), "smtp") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_tp(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_tp, sizeof(l_tp), "tp") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_url(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_url, sizeof(l_url), "url") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_headers(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_headers, sizeof(l_headers), "headers") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
+}
+
+int luaopen_mbox(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)l_mbox, sizeof(l_mbox), "mbox") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
