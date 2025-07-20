@@ -147,77 +147,77 @@ int main(int argc, char** argv) {
 }
 
 int luaopen_re(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_re, sizeof(l_re), "re") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_re, l_re_len, "re") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_socket(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_socket, sizeof(l_socket), "socket") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_socket, l_socket_len, "socket") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_ftp(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_ftp, sizeof(l_ftp), "ftp") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_ftp, l_ftp_len, "ftp") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_http(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_http, sizeof(l_http), "http") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_http, l_http_len, "http") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_ltn12(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_ltn12, sizeof(l_ltn12), "ltn12") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_ltn12, l_ltn12_len, "ltn12") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_mime(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_mime, sizeof(l_mime), "mime") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_mime, l_mime_len, "mime") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_smtp(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_smtp, sizeof(l_smtp), "smtp") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_smtp, l_smtp_len, "smtp") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_tp(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_tp, sizeof(l_tp), "tp") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_tp, l_tp_len, "tp") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_url(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_url, sizeof(l_url), "url") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_url, l_url_len, "url") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_headers(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_headers, sizeof(l_headers), "headers") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_headers, l_headers_len, "headers") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
 }
 
 int luaopen_mbox(lua_State* L) {
-  if (luaL_loadbuffer(L, (const char*)l_mbox, sizeof(l_mbox), "mbox") == LUA_OK) {
+  if (luaL_loadbuffer(L, (const char*)l_mbox, l_mbox_len, "mbox") == LUA_OK) {
     lua_call(L, 0, 1);
   }
   return 1;
