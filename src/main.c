@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "re.h"
+
 #define VERSION "0.1.0"
 
 #define PREAMBLE "axo - your tiny lua toolkit >(^.^)<\n\n"
@@ -21,6 +23,7 @@
 
 int luaopen_lfs(lua_State* L);
 int luaopen_lpeg(lua_State* L);
+int luaopen_re(lua_State* L);
 
 static lua_State* global_L = NULL;
 
@@ -78,6 +81,7 @@ int main(int argc, char** argv) {
   luaL_openlibs(L);
   luax_preload(L, "lfs", luaopen_lfs);
   luax_preload(L, "lpeg", luaopen_lpeg);
+  luax_preload(L, "re", luaopen_re);
 
   lua_createtable(L, argc, 0);
   for (int i = 0; i < argc; i++) {
@@ -106,4 +110,11 @@ int main(int argc, char** argv) {
 
   lua_close(L);
   return (status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+int luaopen_re(lua_State* L) {
+  if (luaL_loadbuffer(L, (const char*)re, sizeof(re), "re") == LUA_OK) {
+    lua_call(L, 0, 1);
+  }
+  return 1;
 }

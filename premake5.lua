@@ -59,6 +59,10 @@ project "lpeg"
 
   disablewarnings { "4244", "4267" }
 
+  prebuildcommands {
+    "python ../scripts/embed.py ../vendor/lpeg/re.lua re.h",
+  }
+
   filter "configurations:debug"
     undefines { "DEBUG" }
 
@@ -73,6 +77,7 @@ project "axo"
   files { "src/**.h", "src/**.c", "assets/axo.rc" }
 
   includedirs {
+    "build",
     "vendor/lua",
     "vendor/glfw/include",
     "vendor/glad",
