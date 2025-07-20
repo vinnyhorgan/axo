@@ -19,6 +19,8 @@
 #include "l_tp.h"
 #include "l_url.h"
 
+#include "axo.h"
+
 #define VERSION "0.1.0"
 
 #define PREAMBLE "axo - your tiny lua toolkit >(^.^)<\n\n"
@@ -116,6 +118,8 @@ int main(int argc, char** argv) {
   luax_preload(L, "socket.url", luaopen_url);
   luax_preload(L, "socket.headers", luaopen_headers);
   luax_preload(L, "mbox", luaopen_mbox);
+
+  luax_preload(L, "axo.window", luaopen_axo_window);
 
   lua_createtable(L, argc, 0);
   for (int i = 0; i < argc; i++) {

@@ -119,7 +119,7 @@ project "axo"
     "vendor/include",
   }
 
-  links { "lua", "glfw", "lfs", "lpeg", "lsocket", "ws2_32" }
+  links { "lua", "glfw", "lfs", "lpeg", "lsocket", "ws2_32", "dwmapi" }
 
   filter "configurations:release"
     postbuildcommands {
