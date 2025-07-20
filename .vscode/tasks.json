@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "generate project",
+      "type": "shell",
+      "command": "premake5",
+      "windows": {
+        "args": ["vs2022"]
+      },
+      "linux": {
+        "args": ["gmake"]
+      },
+      "group": {
+        "kind": "build"
+      }
+    },
+    {
+      "label": "build debug",
+      "type": "shell",
+      "windows": {
+        "command": "msbuild",
+        "args": ["build/axo.sln", "/p:configuration=debug"],
+        "problemMatcher": ["$msCompile"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["-C", "build", "config=debug"],
+        "problemMatcher": ["$gcc"]
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "clear": true
+      }
+    },
+    {
+      "label": "build release",
+      "type": "shell",
+      "windows": {
+        "command": "msbuild",
+        "args": ["build/axo.sln", "/p:configuration=release"],
+        "problemMatcher": ["$msCompile"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["-C", "build", "config=release"],
+        "problemMatcher": ["$gcc"]
+      },
+      "group": {
+        "kind": "build"
+      },
+      "presentation": {
+        "clear": true
+      }
+    },
+    {
+      "label": "run",
+      "type": "shell",
+      "windows": {
+        "command": "./axo.exe"
+      },
+      "linux": {
+        "command": "./axo.AppImage"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/build/bin/debug"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build and run",
+      "dependsOn": ["build debug", "run"],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build"
+      }
+    }
+  ]
+}
