@@ -121,6 +121,8 @@ project "axo"
 
   links { "lua", "glfw", "lfs", "lpeg", "lsocket", "ws2_32", "dwmapi" }
 
+  disablewarnings { "4244" }
+
   filter "configurations:release"
     postbuildcommands {
       "{ECHO} compressing...",

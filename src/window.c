@@ -2,9 +2,6 @@
 
 #include <stdbool.h>
 
-#define GLAD_GLES2_IMPLEMENTATION
-#include <gles2.h>
-
 #include <GLFW/glfw3.h>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -16,12 +13,23 @@
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
 
+#define CHECK_WINDOW(L)                             \
+  do {                                              \
+    if (state.window == NULL) {                     \
+      return luaL_error((L), "window not created"); \
+    }                                               \
+  } while (0)
+
 static struct {
   GLFWwindow* window;
   bool window_shown;
 } state;
 
 static int axo_window_create(lua_State* L) {
+  if (state.window) {
+    return luaL_error(L, "window already created");
+  }
+
   const char* title = luaL_checkstring(L, 1);
   int width = (int)luaL_checkinteger(L, 2);
   int height = (int)luaL_checkinteger(L, 3);
@@ -66,23 +74,23 @@ static int axo_window_create(lua_State* L) {
   glfwMakeContextCurrent(state.window);
   glfwSwapInterval(1);
 
-  int gles_version = gladLoadGLES2(glfwGetProcAddress);
-  printf("gl es version: %d.%d\n", GLAD_VERSION_MAJOR(gles_version), GLAD_VERSION_MINOR(gles_version));
-
-  state.window_shown = false;
+  // store pointer in lua registry
+  lua_pushstring(L, "axo.window");
+  lua_pushlightuserdata(L, state.window);
+  lua_settable(L, LUA_REGISTRYINDEX);
 
   return 0;
 }
 
 static int axo_window_closed(lua_State* L) {
+  CHECK_WINDOW(L);
   int closed = glfwWindowShouldClose(state.window);
   lua_pushboolean(L, closed);
   return 1;
 }
 
 static int axo_window_present(lua_State* L) {
-  (void)L;
-
+  CHECK_WINDOW(L);
   glfwSwapBuffers(state.window);
   if (!state.window_shown) {
     glfwShowWindow(state.window);
@@ -105,11 +113,22 @@ static int axo_window_destroy(lua_State* L) {
   return 0;
 }
 
+static int axo_window_get_size(lua_State* L) {
+  CHECK_WINDOW(L);
+  int width, height;
+  glfwGetFramebufferSize(state.window, &width, &height);
+  lua_pushinteger(L, width);
+  lua_pushinteger(L, height);
+  return 2;
+}
+
 static const luaL_Reg axo_window_funcs[] = {
   { "create", axo_window_create },
   { "closed", axo_window_closed },
   { "present", axo_window_present },
   { "destroy", axo_window_destroy },
+  { "get_size", axo_window_get_size },
+
   { NULL, NULL },
 };
 
@@ -130,6 +149,9 @@ int luaopen_axo_window(lua_State* L) {
   if (!glfwInit()) {
     return luaL_error(L, "failed to initialize window module");
   }
+
+  state.window = NULL;
+  state.window_shown = false;
 
   register_window_close(L);
   luaL_newlib(L, axo_window_funcs);
