@@ -41,9 +41,12 @@ static int axo_window_create(lua_State* L) {
     resizable = 1;
   }
 
+  int samples = (int)luaL_optinteger(L, 5, 4);
+
   glfwWindowHint(GLFW_RESIZABLE, resizable);
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+  glfwWindowHint(GLFW_SAMPLES, samples);
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
