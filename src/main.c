@@ -120,6 +120,7 @@ int main(int argc, char** argv) {
   luax_preload(L, "mbox", luaopen_mbox);
 
   luax_preload(L, "axo.window", luaopen_axo_window);
+  luax_preload(L, "axo.gl", luaopen_axo_gl);
 
   lua_createtable(L, argc, 0);
   for (int i = 0; i < argc; i++) {

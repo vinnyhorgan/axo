@@ -2,6 +2,9 @@
 
 #include <stdbool.h>
 
+#define GLAD_GLES2_IMPLEMENTATION
+#include <gles2.h>
+
 #include <GLFW/glfw3.h>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -34,6 +37,10 @@ static int axo_window_create(lua_State* L) {
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+
   state.window = glfwCreateWindow(width, height, title, NULL, NULL);
   if (!state.window) {
     return luaL_error(L, "failed to create window");
@@ -58,6 +65,9 @@ static int axo_window_create(lua_State* L) {
 
   glfwMakeContextCurrent(state.window);
   glfwSwapInterval(1);
+
+  int gles_version = gladLoadGLES2(glfwGetProcAddress);
+  printf("gl es version: %d.%d\n", GLAD_VERSION_MAJOR(gles_version), GLAD_VERSION_MINOR(gles_version));
 
   state.window_shown = false;
 
@@ -115,6 +125,8 @@ static void register_window_close(lua_State* L) {
 }
 
 int luaopen_axo_window(lua_State* L) {
+  glfwInitHint(GLFW_WIN32_MESSAGES_IN_FIBER, GLFW_TRUE);
+
   if (!glfwInit()) {
     return luaL_error(L, "failed to initialize window module");
   }
