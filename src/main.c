@@ -121,6 +121,7 @@ int main(int argc, char** argv) {
 
   luax_preload(L, "axo.window", luaopen_axo_window);
   luax_preload(L, "axo.gl", luaopen_axo_gl);
+  luax_preload(L, "axo.image", luaopen_axo_image);
 
   lua_createtable(L, argc, 0);
   for (int i = 0; i < argc; i++) {

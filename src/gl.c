@@ -28,7 +28,9 @@ const char* vertex_shader_src =
     "attribute vec3 a_position;\n"
     "attribute vec4 a_color;\n"
     "attribute vec3 a_normal;\n"
+    "attribute vec2 a_texcoord;\n"
     "varying vec4 v_color;\n"
+    "varying vec2 v_texcoord;\n"
     "void main() {\n"
     "  vec4 pos_view = u_modelview * vec4(a_position, 1.0);\n"
     "  vec3 normal = normalize(vec3(u_modelview * vec4(a_normal, 0.0)));\n"
@@ -36,14 +38,18 @@ const char* vertex_shader_src =
     "  float diff = max(dot(normal, light_dir), 0.0);\n"
     "  vec4 ambient = vec4(0.2, 0.2, 0.2, 1.0);\n"
     "  v_color = a_color * (ambient + diff);\n"
+    "  v_texcoord = a_texcoord;\n"
     "  gl_Position = u_projection * pos_view;\n"
     "}\n";
 
 const char* fragment_shader_src =
     "precision mediump float;\n"
+    "uniform sampler2D u_texture;\n"
     "varying vec4 v_color;\n"
+    "varying vec2 v_texcoord;\n"
     "void main() {\n"
-    "  gl_FragColor = v_color;\n"
+    "  vec4 tex_color = texture2D(u_texture, v_texcoord);\n"
+    "  gl_FragColor = tex_color * v_color;\n"
     "}\n";
 
 typedef enum {
@@ -72,10 +78,14 @@ static struct {
   vec3 current_normal;
   vec3 normals[1024];
 
+  vec2 current_texcoord;
+  vec2 texcoords[1024];
+
   GLuint shader;
   GLint attr_position;
   GLint attr_color;
   GLint attr_normal;
+  GLint attr_texcoord;
 
   GLint uniform_modelview;
   GLint uniform_projection;
@@ -84,6 +94,7 @@ static struct {
   GLuint vbo;
   GLuint color_vbo;
   GLuint normal_vbo;
+  GLuint texcoord_vbo;
 } state;
 
 GLuint compile_shader(GLenum type, const char* source) {
@@ -143,6 +154,7 @@ static int axo_gl_init(lua_State* L) {
   state.attr_position = glGetAttribLocation(state.shader, "a_position");
   state.attr_color = glGetAttribLocation(state.shader, "a_color");
   state.attr_normal = glGetAttribLocation(state.shader, "a_normal");
+  state.attr_texcoord = glGetAttribLocation(state.shader, "a_texcoord");
 
   state.uniform_modelview = glGetUniformLocation(state.shader, "u_modelview");
   state.uniform_projection = glGetUniformLocation(state.shader, "u_projection");
@@ -151,6 +163,7 @@ static int axo_gl_init(lua_State* L) {
   glGenBuffers(1, &state.vbo);
   glGenBuffers(1, &state.color_vbo);
   glGenBuffers(1, &state.normal_vbo);
+  glGenBuffers(1, &state.texcoord_vbo);
 
   state.init = true;
   return 0;
@@ -302,6 +315,10 @@ static int axo_gl_finish(lua_State* L) {
 
   glUseProgram(state.shader);
 
+  // texture
+  glActiveTexture(GL_TEXTURE0);
+  glUniform1i(glGetUniformLocation(state.shader, "u_texture"), 0);
+
   glUniformMatrix4fv(state.uniform_modelview, 1, GL_FALSE, (const GLfloat*)*modelview);
   glUniformMatrix4fv(state.uniform_projection, 1, GL_FALSE, (const GLfloat*)*projection);
   glUniform3fv(state.uniform_light_pos, 1, light_dir);
@@ -320,6 +337,11 @@ static int axo_gl_finish(lua_State* L) {
   glBufferData(GL_ARRAY_BUFFER, state.vertex_count * sizeof(vec3), state.normals, GL_STREAM_DRAW);
   glEnableVertexAttribArray(state.attr_normal);
   glVertexAttribPointer(state.attr_normal, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, state.texcoord_vbo);
+  glBufferData(GL_ARRAY_BUFFER, state.vertex_count * sizeof(vec2), state.texcoords, GL_STREAM_DRAW);
+  glEnableVertexAttribArray(state.attr_texcoord);
+  glVertexAttribPointer(state.attr_texcoord, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
 
   glDrawArrays(GL_TRIANGLES, 0, state.vertex_count);
 
@@ -354,6 +376,7 @@ static int axo_gl_vertex(lua_State* L) {
 
   memcpy(state.colors[state.vertex_count], state.current_color, sizeof(vec4));
   memcpy(state.normals[state.vertex_count], state.current_normal, sizeof(vec3));
+  memcpy(state.texcoords[state.vertex_count], state.current_texcoord, sizeof(vec2));
   state.vertex_count++;
 
   return 0;
@@ -401,6 +424,24 @@ static int axo_gl_normal(lua_State* L) {
   return 0;
 }
 
+static int axo_gl_tex_coord(lua_State* L) {
+  CHECK_INIT(L);
+  if (!state.drawing) {
+    return luaL_error(L, "not currently drawing");
+  }
+
+  if (state.vertex_count >= 1024) {
+    return luaL_error(L, "vertex buffer overflow");
+  }
+
+  float x = (float)luaL_checknumber(L, 1);
+  float y = (float)luaL_checknumber(L, 2);
+
+  state.current_texcoord[0] = x;
+  state.current_texcoord[1] = y;
+  return 0;
+}
+
 static int axo_gl_clear_color(lua_State* L) {
   CHECK_INIT(L);
   float r = (float)luaL_checknumber(L, 1);
@@ -440,6 +481,33 @@ static int axo_gl_enable(lua_State* L) {
   return 0;
 }
 
+static int axo_gl_create_texture(lua_State* L) {
+  CHECK_INIT(L);
+
+  size_t len;
+  const char* data = luaL_checklstring(L, 1, &len);
+  int width = (int)luaL_checkinteger(L, 2);
+  int height = (int)luaL_checkinteger(L, 3);
+
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  lua_pushinteger(L, texture);
+  return 1;
+}
+
+static int axo_gl_bind_texture(lua_State* L) {
+  CHECK_INIT(L);
+  GLuint texture = (GLuint)luaL_checkinteger(L, 1);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  return 0;
+}
+
 static const luaL_Reg axo_gl_funcs[] = {
   { "init", axo_gl_init },
   { "matrix_mode", axo_gl_matrix_mode },
@@ -455,10 +523,13 @@ static const luaL_Reg axo_gl_funcs[] = {
   { "vertex", axo_gl_vertex },
   { "color", axo_gl_color },
   { "normal", axo_gl_normal },
+  { "tex_coord", axo_gl_tex_coord },
   { "clear_color", axo_gl_clear_color },
   { "clear", axo_gl_clear },
   { "viewport", axo_gl_viewport },
   { "enable", axo_gl_enable },
+  { "create_texture", axo_gl_create_texture },
+  { "bind_texture", axo_gl_bind_texture },
   { NULL, NULL },
 };
 
