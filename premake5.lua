@@ -123,6 +123,11 @@ project "axo"
 
   disablewarnings { "4244" }
 
+  prebuildcommands {
+    "python ../scripts/embed.py ../assets/vs.glsl s_vs.h",
+    "python ../scripts/embed.py ../assets/fs.glsl s_fs.h",
+  }
+
   filter "configurations:release"
     postbuildcommands {
       "{ECHO} compressing...",

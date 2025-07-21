@@ -12,6 +12,9 @@
 
 #include <linmath.h>
 
+#include "fs.h"
+#include "vs.h"
+
 #define STACK_SIZE 32
 
 #define CHECK_INIT(L)                                \
@@ -20,37 +23,6 @@
       return luaL_error((L), "context not created"); \
     }                                                \
   } while (0)
-
-const char* vertex_shader_src =
-    "uniform mat4 u_modelview;\n"
-    "uniform mat4 u_projection;\n"
-    "uniform vec3 u_light_pos;\n"
-    "attribute vec3 a_position;\n"
-    "attribute vec4 a_color;\n"
-    "attribute vec3 a_normal;\n"
-    "attribute vec2 a_texcoord;\n"
-    "varying vec4 v_color;\n"
-    "varying vec2 v_texcoord;\n"
-    "void main() {\n"
-    "  vec4 pos_view = u_modelview * vec4(a_position, 1.0);\n"
-    "  vec3 normal = normalize(vec3(u_modelview * vec4(a_normal, 0.0)));\n"
-    "  vec3 light_dir = normalize(u_light_pos - pos_view.xyz);\n"
-    "  float diff = max(dot(normal, light_dir), 0.0);\n"
-    "  vec4 ambient = vec4(0.2, 0.2, 0.2, 1.0);\n"
-    "  v_color = a_color * (ambient + diff);\n"
-    "  v_texcoord = a_texcoord;\n"
-    "  gl_Position = u_projection * pos_view;\n"
-    "}\n";
-
-const char* fragment_shader_src =
-    "precision mediump float;\n"
-    "uniform sampler2D u_texture;\n"
-    "varying vec4 v_color;\n"
-    "varying vec2 v_texcoord;\n"
-    "void main() {\n"
-    "  vec4 tex_color = texture2D(u_texture, v_texcoord);\n"
-    "  gl_FragColor = tex_color * v_color;\n"
-    "}\n";
 
 typedef enum {
   MODELVIEW,
@@ -115,8 +87,8 @@ GLuint compile_shader(GLenum type, const char* source) {
 }
 
 GLuint create_program() {
-  GLuint vs = compile_shader(GL_VERTEX_SHADER, vertex_shader_src);
-  GLuint fs = compile_shader(GL_FRAGMENT_SHADER, fragment_shader_src);
+  GLuint vs = compile_shader(GL_VERTEX_SHADER, (const char*)l_vs);
+  GLuint fs = compile_shader(GL_FRAGMENT_SHADER, (const char*)l_fs);
   GLuint program = glCreateProgram();
   glAttachShader(program, vs);
   glAttachShader(program, fs);
