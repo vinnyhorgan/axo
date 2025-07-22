@@ -108,15 +108,20 @@ GLuint create_program() {
   return program;
 }
 
+static int axo_gl_deinit(lua_State* L) {
+  (void)L;
+  return 0;
+}
+
 static int axo_gl_init(lua_State* L) {
   if (state.init) {
     return luaL_error(L, "context already initialized");
   }
 
-  lua_pushstring(L, "axo.window");
+  lua_pushstring(L, "axo.window.created");
   lua_gettable(L, LUA_REGISTRYINDEX);
 
-  if (!lua_islightuserdata(L, -1)) {
+  if (!lua_toboolean(L, -1)) {
     return luaL_error(L, "window not created");
   }
 
@@ -136,6 +141,9 @@ static int axo_gl_init(lua_State* L) {
   glGenBuffers(1, &state.color_vbo);
   glGenBuffers(1, &state.normal_vbo);
   glGenBuffers(1, &state.texcoord_vbo);
+
+  lua_pushcfunction(L, axo_gl_deinit);
+  lua_setfield(L, LUA_REGISTRYINDEX, "axo.gl.deinit");
 
   state.init = true;
   return 0;

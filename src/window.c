@@ -135,8 +135,8 @@ static int axo_window_create(lua_State* L) {
   glfwSwapInterval(1);
 
   // store pointer in lua registry
-  lua_pushstring(L, "axo.window");
-  lua_pushlightuserdata(L, state.window);
+  lua_pushstring(L, "axo.window.created");
+  lua_pushboolean(L, true);
   lua_settable(L, LUA_REGISTRYINDEX);
 
   return 0;
@@ -165,11 +165,22 @@ static int axo_window_destroy(lua_State* L) {
   (void)L;
 
   if (state.window) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "axo.gl.deinit");
+    if (lua_isfunction(L, -1)) {
+      lua_call(L, 0, 0);
+
+      lua_pushnil(L);
+      lua_setfield(L, LUA_REGISTRYINDEX, "axo.gl.deinit");
+    } else {
+      lua_pop(L, 1);  // remove non-function
+    }
+
     glfwDestroyWindow(state.window);
     state.window = NULL;
-  }
 
-  glfwTerminate();
+    lua_pushnil(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, "axo.window.created");
+  }
   return 0;
 }
 
@@ -266,20 +277,25 @@ static const luaL_Reg axo_window_funcs[] = {
   { NULL, NULL },
 };
 
-static void register_window_close(lua_State* L) {
+static int axo_window_deinit(lua_State* L) {
+  axo_window_destroy(L);
+  glfwTerminate();
+  return 0;
+}
+
+static void register_window_deinit(lua_State* L) {
   void** ud = lua_newuserdata(L, sizeof(void*));
   *ud = NULL;
 
   luaL_newmetatable(L, "axo.window.__gc");
-  lua_pushcfunction(L, axo_window_destroy);
+  lua_pushcfunction(L, axo_window_deinit);
   lua_setfield(L, -2, "__gc");
   lua_setmetatable(L, -2);
-  lua_setfield(L, LUA_REGISTRYINDEX, "axo.window.close");
+  lua_setfield(L, LUA_REGISTRYINDEX, "axo.window.deinit");
 }
 
 int luaopen_axo_window(lua_State* L) {
   glfwInitHint(GLFW_WIN32_MESSAGES_IN_FIBER, GLFW_TRUE);
-
   if (!glfwInit()) {
     return luaL_error(L, "failed to initialize window module");
   }
@@ -287,7 +303,7 @@ int luaopen_axo_window(lua_State* L) {
   state.window = NULL;
   state.window_shown = false;
 
-  register_window_close(L);
+  register_window_deinit(L);
   luaL_newlib(L, axo_window_funcs);
   return 1;
 }
