@@ -12,8 +12,8 @@
 
 #include <linmath.h>
 
-#include "fs.h"
-#include "vs.h"
+#include "l_fs.h"
+#include "l_vs.h"
 
 #define STACK_SIZE 32
 
@@ -280,7 +280,12 @@ static int axo_gl_finish(lua_State* L) {
     return luaL_error(L, "not currently drawing");
   }
 
-  vec3 light_dir = { 0.0f, 3.0f, 5.0f };
+  vec4 light_world = { 0.0f, 3.0f, 5.0f, 1.0f };
+
+  vec4 light_view;
+  mat4x4_mul_vec4(light_view, state.modelview_stack[state.modelview_top], light_world);
+
+  vec3 light = { light_view[0], light_view[1], light_view[2] };
 
   mat4x4* modelview = &state.modelview_stack[state.modelview_top];
   mat4x4* projection = &state.projection_stack[state.projection_top];
@@ -293,7 +298,7 @@ static int axo_gl_finish(lua_State* L) {
 
   glUniformMatrix4fv(state.uniform_modelview, 1, GL_FALSE, (const GLfloat*)*modelview);
   glUniformMatrix4fv(state.uniform_projection, 1, GL_FALSE, (const GLfloat*)*projection);
-  glUniform3fv(state.uniform_light_pos, 1, light_dir);
+  glUniform3fv(state.uniform_light_pos, 1, light);
 
   glBindBuffer(GL_ARRAY_BUFFER, state.vbo);
   glBufferData(GL_ARRAY_BUFFER, state.vertex_count * sizeof(vec3), state.vertices, GL_STREAM_DRAW);
@@ -447,6 +452,27 @@ static int axo_gl_enable(lua_State* L) {
   const char* cap = luaL_checkstring(L, 1);
   if (strcmp(cap, "depth_test") == 0) {
     glEnable(GL_DEPTH_TEST);
+  } else if (strcmp(cap, "lighting") == 0) {
+    glUseProgram(state.shader);
+    GLint use_lighting = 1;
+    glUniform1i(glGetUniformLocation(state.shader, "u_use_lighting"), use_lighting);
+    glUseProgram(0);
+  } else {
+    return luaL_error(L, "unknown capability: %s", cap);
+  }
+  return 0;
+}
+
+static int axo_gl_disable(lua_State* L) {
+  CHECK_INIT(L);
+  const char* cap = luaL_checkstring(L, 1);
+  if (strcmp(cap, "depth_test") == 0) {
+    glDisable(GL_DEPTH_TEST);
+  } else if (strcmp(cap, "lighting") == 0) {
+    glUseProgram(state.shader);
+    GLint use_lighting = 0;
+    glUniform1i(glGetUniformLocation(state.shader, "u_use_lighting"), use_lighting);
+    glUseProgram(0);
   } else {
     return luaL_error(L, "unknown capability: %s", cap);
   }
@@ -480,6 +506,44 @@ static int axo_gl_bind_texture(lua_State* L) {
   return 0;
 }
 
+static int axo_gl_create_framebuffer(lua_State* L) {
+  CHECK_INIT(L);
+
+  int width = (int)luaL_checkinteger(L, 1);
+  int height = (int)luaL_checkinteger(L, 2);
+
+  GLuint color_tex;
+  glGenTextures(1, &color_tex);
+  glBindTexture(GL_TEXTURE_2D, color_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  GLuint depth_rb;
+  glGenRenderbuffers(1, &depth_rb);
+  glBindRenderbuffer(GL_RENDERBUFFER, depth_rb);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+  GLuint framebuffer;
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_tex, 0);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_rb);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  lua_pushinteger(L, framebuffer);
+  lua_pushinteger(L, color_tex);
+  return 2;
+}
+
+static int axo_gl_bind_framebuffer(lua_State* L) {
+  CHECK_INIT(L);
+  GLuint framebuffer = (GLuint)luaL_checkinteger(L, 1);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  return 0;
+}
+
 static const luaL_Reg axo_gl_funcs[] = {
   { "init", axo_gl_init },
   { "matrix_mode", axo_gl_matrix_mode },
@@ -500,8 +564,11 @@ static const luaL_Reg axo_gl_funcs[] = {
   { "clear", axo_gl_clear },
   { "viewport", axo_gl_viewport },
   { "enable", axo_gl_enable },
+  { "disable", axo_gl_disable },
   { "create_texture", axo_gl_create_texture },
   { "bind_texture", axo_gl_bind_texture },
+  { "create_framebuffer", axo_gl_create_framebuffer },
+  { "bind_framebuffer", axo_gl_bind_framebuffer },
   { NULL, NULL },
 };
 
