@@ -67,6 +67,9 @@ static struct {
   GLuint color_vbo;
   GLuint normal_vbo;
   GLuint texcoord_vbo;
+
+  GLuint default_tex;
+  GLuint current_tex;
 } state;
 
 GLuint compile_shader(GLenum type, const char* source) {
@@ -138,6 +141,14 @@ static int axo_gl_init(lua_State* L) {
   glGenBuffers(1, &state.color_vbo);
   glGenBuffers(1, &state.normal_vbo);
   glGenBuffers(1, &state.texcoord_vbo);
+
+  glGenTextures(1, &state.default_tex);
+  glBindTexture(GL_TEXTURE_2D, state.default_tex);
+  uint32_t white_pixel = 0xFFFFFFFF;  // RGBA: White
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white_pixel);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   lua_pushcfunction(L, axo_gl_deinit);
   lua_setfield(L, LUA_REGISTRYINDEX, "axo.gl.deinit");
@@ -299,6 +310,11 @@ static int axo_gl_finish(lua_State* L) {
 
   // texture
   glActiveTexture(GL_TEXTURE0);
+  if (state.current_tex == 0) {
+    glBindTexture(GL_TEXTURE_2D, state.default_tex);
+  } else {
+    glBindTexture(GL_TEXTURE_2D, state.current_tex);
+  }
   glUniform1i(glGetUniformLocation(state.shader, "u_texture"), 0);
 
   glUniformMatrix4fv(state.uniform_modelview, 1, GL_FALSE, (const GLfloat*)*modelview);
@@ -508,6 +524,7 @@ static int axo_gl_bind_texture(lua_State* L) {
   CHECK_INIT(L);
   GLuint texture = (GLuint)luaL_checkinteger(L, 1);
   glBindTexture(GL_TEXTURE_2D, texture);
+  state.current_tex = texture;
   return 0;
 }
 
@@ -589,6 +606,7 @@ int luaopen_axo_gl(lua_State* L) {
   state.current_color[1] = 1.0f;
   state.current_color[2] = 1.0f;
   state.current_color[3] = 1.0f;
+  state.current_tex = 0;
 
   luaL_newlib(L, axo_gl_funcs);
   return 1;

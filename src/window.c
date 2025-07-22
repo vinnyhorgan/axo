@@ -195,6 +195,24 @@ static int axo_window_set_mouse_enabled(lua_State* L) {
   return 0;
 }
 
+static int axo_window_set_vsync(lua_State* L) {
+  CHECK_WINDOW(L);
+  bool enabled = lua_toboolean(L, 1);
+  if (enabled) {
+    glfwSwapInterval(1);
+  } else {
+    glfwSwapInterval(0);
+  }
+  return 0;
+}
+
+static int axo_window_set_title(lua_State* L) {
+  CHECK_WINDOW(L);
+  const char* title = luaL_checkstring(L, 1);
+  glfwSetWindowTitle(state.window, title);
+  return 0;
+}
+
 static int axo_window_set_key_callback(lua_State* L) {
   CHECK_WINDOW(L);
 
@@ -262,6 +280,8 @@ static const luaL_Reg axo_window_funcs[] = {
   { "destroy", axo_window_destroy },
   { "get_size", axo_window_get_size },
   { "set_mouse_enabled", axo_window_set_mouse_enabled },
+  { "set_vsync", axo_window_set_vsync },
+  { "set_title", axo_window_set_title },
   { "set_key_callback", axo_window_set_key_callback },
   { "set_mouse_callback", axo_window_set_mouse_callback },
   { "set_cursor_callback", axo_window_set_cursor_callback },
