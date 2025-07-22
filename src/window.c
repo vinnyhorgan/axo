@@ -23,7 +23,63 @@
 static struct {
   GLFWwindow* window;
   bool window_shown;
+
+  int key_cb_ref;
+  int mouse_cb_ref;
+  int cursor_cb_ref;
 } state;
+
+// utils
+
+static void key_cb(GLFWwindow* win, int key, int scancode, int action, int mods) {
+  lua_State* L = glfwGetWindowUserPointer(win);
+  if (state.key_cb_ref == LUA_NOREF) {
+    return;
+  }
+
+  lua_rawgeti(L, LUA_REGISTRYINDEX, state.key_cb_ref);
+  lua_pushinteger(L, key);
+  lua_pushinteger(L, scancode);
+  lua_pushinteger(L, action);
+  lua_pushinteger(L, mods);
+
+  if (lua_pcall(L, 4, 0, 0) != LUA_OK) {
+    lua_pop(L, 1);
+  }
+}
+
+static void mouse_cb(GLFWwindow* win, int button, int action, int mods) {
+  lua_State* L = glfwGetWindowUserPointer(win);
+  if (state.mouse_cb_ref == LUA_NOREF) {
+    return;
+  }
+
+  lua_rawgeti(L, LUA_REGISTRYINDEX, state.mouse_cb_ref);
+  lua_pushinteger(L, button);
+  lua_pushinteger(L, action);
+  lua_pushinteger(L, mods);
+
+  if (lua_pcall(L, 3, 0, 0) != LUA_OK) {
+    lua_pop(L, 1);
+  }
+}
+
+static void cursor_cb(GLFWwindow* win, double xpos, double ypos) {
+  lua_State* L = glfwGetWindowUserPointer(win);
+  if (state.cursor_cb_ref == LUA_NOREF) {
+    return;
+  }
+
+  lua_rawgeti(L, LUA_REGISTRYINDEX, state.cursor_cb_ref);
+  lua_pushnumber(L, xpos);
+  lua_pushnumber(L, ypos);
+
+  if (lua_pcall(L, 2, 0, 0) != LUA_OK) {
+    lua_pop(L, 1);
+  }
+}
+
+// api
 
 static int axo_window_create(lua_State* L) {
   if (state.window) {
@@ -74,6 +130,7 @@ static int axo_window_create(lua_State* L) {
     }
   }
 
+  glfwSetWindowUserPointer(state.window, L);
   glfwMakeContextCurrent(state.window);
   glfwSwapInterval(1);
 
@@ -125,13 +182,87 @@ static int axo_window_get_size(lua_State* L) {
   return 2;
 }
 
+static int axo_window_set_mouse_enabled(lua_State* L) {
+  CHECK_WINDOW(L);
+  bool enabled = lua_toboolean(L, 1);
+  if (enabled) {
+    glfwSetInputMode(state.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+  } else {
+    glfwSetInputMode(state.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  }
+  return 0;
+}
+
+static int axo_window_set_key_callback(lua_State* L) {
+  CHECK_WINDOW(L);
+
+  if (state.key_cb_ref != LUA_NOREF) {
+    luaL_unref(L, LUA_REGISTRYINDEX, state.key_cb_ref);
+    state.key_cb_ref = LUA_NOREF;
+  }
+
+  if (lua_isnoneornil(L, 1)) {
+    return 0;
+  }
+
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+  lua_pushvalue(L, 1);
+  state.key_cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  glfwSetKeyCallback(state.window, key_cb);
+  return 0;
+}
+
+static int axo_window_set_mouse_callback(lua_State* L) {
+  CHECK_WINDOW(L);
+
+  if (state.mouse_cb_ref != LUA_NOREF) {
+    luaL_unref(L, LUA_REGISTRYINDEX, state.mouse_cb_ref);
+    state.mouse_cb_ref = LUA_NOREF;
+  }
+
+  if (lua_isnoneornil(L, 1)) {
+    return 0;
+  }
+
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+  lua_pushvalue(L, 1);
+  state.mouse_cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  glfwSetMouseButtonCallback(state.window, mouse_cb);
+  return 0;
+}
+
+static int axo_window_set_cursor_callback(lua_State* L) {
+  CHECK_WINDOW(L);
+
+  if (state.cursor_cb_ref != LUA_NOREF) {
+    luaL_unref(L, LUA_REGISTRYINDEX, state.cursor_cb_ref);
+    state.cursor_cb_ref = LUA_NOREF;
+  }
+
+  if (lua_isnoneornil(L, 1)) {
+    return 0;
+  }
+
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+  lua_pushvalue(L, 1);
+  state.cursor_cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  glfwSetCursorPosCallback(state.window, cursor_cb);
+  return 0;
+}
+
 static const luaL_Reg axo_window_funcs[] = {
   { "create", axo_window_create },
   { "closed", axo_window_closed },
   { "present", axo_window_present },
   { "destroy", axo_window_destroy },
   { "get_size", axo_window_get_size },
-
+  { "set_mouse_enabled", axo_window_set_mouse_enabled },
+  { "set_key_callback", axo_window_set_key_callback },
+  { "set_mouse_callback", axo_window_set_mouse_callback },
+  { "set_cursor_callback", axo_window_set_cursor_callback },
   { NULL, NULL },
 };
 
