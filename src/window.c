@@ -133,12 +133,6 @@ static int axo_window_create(lua_State* L) {
   glfwSetWindowUserPointer(state.window, L);
   glfwMakeContextCurrent(state.window);
   glfwSwapInterval(1);
-
-  // store pointer in lua registry
-  lua_pushstring(L, "axo.window.created");
-  lua_pushboolean(L, true);
-  lua_settable(L, LUA_REGISTRYINDEX);
-
   return 0;
 }
 
@@ -177,9 +171,6 @@ static int axo_window_destroy(lua_State* L) {
 
     glfwDestroyWindow(state.window);
     state.window = NULL;
-
-    lua_pushnil(L);
-    lua_setfield(L, LUA_REGISTRYINDEX, "axo.window.created");
   }
   return 0;
 }

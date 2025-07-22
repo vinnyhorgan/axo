@@ -118,10 +118,7 @@ static int axo_gl_init(lua_State* L) {
     return luaL_error(L, "context already initialized");
   }
 
-  lua_pushstring(L, "axo.window.created");
-  lua_gettable(L, LUA_REGISTRYINDEX);
-
-  if (!lua_toboolean(L, -1)) {
+  if (glfwGetCurrentContext() == NULL) {
     return luaL_error(L, "window not created");
   }
 
